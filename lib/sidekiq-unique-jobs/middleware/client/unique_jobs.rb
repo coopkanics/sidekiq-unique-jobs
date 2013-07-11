@@ -9,6 +9,7 @@ module SidekiqUniqueJobs
           klass = worker_class_constantize(worker_class)
 
           enabled = klass.get_sidekiq_options['unique'] || item['unique']
+          manual  = (enabled == :manual)
           unique_job_expiration = klass.get_sidekiq_options['unique_job_expiration']
 
           if enabled
@@ -33,9 +34,11 @@ module SidekiqUniqueJobs
                 expires_at = ((Time.at(item['at']) - Time.now.utc) + expires_at).to_i if item['at']
 
                 unique = conn.multi do
-                  # set value of 2 for scheduled jobs, 1 for queued jobs.
-                  conn.setex(payload_hash, expires_at, item['at'] ? 2 : 1)
+                  # set value of 2 for scheduled jobs, 1 for queued jobs.                 
+                  conn.set(payload_hash, item['at'] ? 2 : 1)
+                  conn.expire(payload_hash, expires_at) unless manual
                 end
+                
               end
             end
             yield if unique
