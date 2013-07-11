@@ -5,7 +5,7 @@ module SidekiqUniqueJobs
     end
 
     def self.unique_prefix
-      @unique_prefix || "sidekiq_unique"
+      @unique_prefix || "lock"
     end
 
     def self.unique_args_enabled=(enabled)
